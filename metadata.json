@@ -1,0 +1,8 @@
+{
+  "name": "Morse Code light",
+  "description": "Morse code communicator with text-to-beeps/screen flashes, camera LED flash transmitter, and camera optical flashlight receiver and decoder.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
