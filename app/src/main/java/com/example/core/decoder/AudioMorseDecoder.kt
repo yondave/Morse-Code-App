@@ -55,6 +55,7 @@ class AudioMorseDecoder {
     var targetPitchHz: Int = 750
         set(value) {
             field = value.coerceIn(350, 1500)
+            updateGoertzelCoeff()
             _decoderState.update { it.copy(targetPitchHz = field, detectedPitchHz = field) }
         }
 
@@ -90,9 +91,17 @@ class AudioMorseDecoder {
 
     private val sampleRate = 44100
     private val bufferChunkSize = 512 // ~11.6ms window for low latency
+    private var cachedGoertzelCoeff: Double = 0.0
 
     init {
         updateUnitTiming()
+        updateGoertzelCoeff()
+    }
+
+    private fun updateGoertzelCoeff() {
+        val k = (0.5 + (bufferChunkSize * targetPitchHz.toDouble() / sampleRate)).toInt()
+        val omega = (2.0 * Math.PI * k) / bufferChunkSize
+        cachedGoertzelCoeff = 2.0 * kotlin.math.cos(omega)
     }
 
     fun updateUnitTiming() {
@@ -156,9 +165,8 @@ class AudioMorseDecoder {
                     val rms = sqrt(sumSquares / readSamples)
                     val db = if (rms > 0) (20 * log10(rms / 32767.0)).toFloat().coerceIn(-80f, 0f) else -80f
 
-                    // Compute tone energy via Goertzel algorithm at target frequency
-                    val targetFreq = targetPitchHz.toDouble()
-                    val toneMagnitude = computeGoertzel(audioBuffer, readSamples, targetFreq, sampleRate)
+                    // Compute tone energy via Goertzel algorithm at target frequency (using precomputed coeff)
+                    val toneMagnitude = computeGoertzelFast(audioBuffer, readSamples, cachedGoertzelCoeff)
 
                     // Track noise floor vs peak energy with exponential moving average
                     if (toneMagnitude > peakEnergySmoothed) {
@@ -358,6 +366,29 @@ class AudioMorseDecoder {
         val cosine = Math.cos(omega)
         val coeff = 2.0 * cosine
 
+        var s0: Double
+        var s1 = 0.0
+        var s2 = 0.0
+
+        for (i in 0 until numSamples) {
+            val x = samples[i].toDouble()
+            s0 = x + coeff * s1 - s2
+            s2 = s1
+            s1 = s0
+        }
+
+        val magSq = s1 * s1 + s2 * s2 - coeff * s1 * s2
+        return sqrt(max(0.0, magSq)) / numSamples
+    }
+
+    /**
+     * Fast Goertzel calculation with precomputed coefficient
+     */
+    private fun computeGoertzelFast(
+        samples: ShortArray,
+        numSamples: Int,
+        coeff: Double
+    ): Double {
         var s0: Double
         var s1 = 0.0
         var s2 = 0.0

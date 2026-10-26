@@ -78,6 +78,7 @@ class CameraMorseDecoder : ImageAnalysis.Analyzer {
     private val historyBuffer = ArrayDeque<Float>(80)
 
     private var lastPeriodicCheckTime = SystemClock.elapsedRealtime()
+    private var reusableRowBuffer = ByteArray(4096)
 
     init {
         updateUnitTiming()
@@ -236,12 +237,16 @@ class CameraMorseDecoder : ImageAnalysis.Analyzer {
 
         // Subsample for fast real-time performance
         val step = 2
-        val rowBuffer = ByteArray(roiWidth * pixelStride)
+        val bytesNeeded = roiWidth * pixelStride
+        if (reusableRowBuffer.size < bytesNeeded) {
+            reusableRowBuffer = ByteArray(bytesNeeded * 2)
+        }
+        val rowBuffer = reusableRowBuffer
 
         for (y in startY until (startY + roiHeight) step step) {
             val rowStart = y * rowStride + startX * pixelStride
             buffer.position(rowStart)
-            val bytesToRead = (roiWidth * pixelStride).coerceAtMost(buffer.remaining())
+            val bytesToRead = bytesNeeded.coerceAtMost(buffer.remaining())
             if (bytesToRead <= 0) continue
             buffer.get(rowBuffer, 0, bytesToRead)
 

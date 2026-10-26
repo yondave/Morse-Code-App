@@ -55,6 +55,11 @@ fun SignalOscilloscope(
         label = "statusColor"
     )
 
+    val wavePath = androidx.compose.runtime.remember { Path() }
+    val dashEffect = androidx.compose.runtime.remember { PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f) }
+    val glowStroke = androidx.compose.runtime.remember { Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
+    val lineStroke = androidx.compose.runtime.remember { Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -96,35 +101,35 @@ fun SignalOscilloscope(
                 start = Offset(0f, threshY),
                 end = Offset(width, threshY),
                 strokeWidth = 1.5f,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+                pathEffect = dashEffect
             )
 
             // Draw Signal Waveform
             if (history.size >= 2) {
-                val path = Path()
+                wavePath.reset()
                 val stepX = width / (history.size - 1).coerceAtLeast(1)
 
                 history.forEachIndexed { index, value ->
                     val x = index * stepX
                     val y = height * (1f - value.coerceIn(0f, 1f))
                     if (index == 0) {
-                        path.moveTo(x, y)
+                        wavePath.moveTo(x, y)
                     } else {
-                        path.lineTo(x, y)
+                        wavePath.lineTo(x, y)
                     }
                 }
 
                 // Waveform glow and trace
                 val waveColor = if (isSignalOn) SophisticatedGreen else accentColor
                 drawPath(
-                    path = path,
+                    path = wavePath,
                     color = waveColor.copy(alpha = 0.35f),
-                    style = Stroke(width = 4f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    style = glowStroke
                 )
                 drawPath(
-                    path = path,
+                    path = wavePath,
                     color = waveColor,
-                    style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    style = lineStroke
                 )
             }
         }

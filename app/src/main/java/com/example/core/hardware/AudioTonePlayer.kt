@@ -22,9 +22,15 @@ class AudioTonePlayer {
     private var isPlayingContinuous = false
     private var continuousThread: Thread? = null
 
+    private val pcmCache = java.util.concurrent.ConcurrentHashMap<Long, ShortArray>()
+
     var frequency: Double = DEFAULT_FREQUENCY
         set(value) {
-            field = value.coerceIn(300.0, 1500.0)
+            val clamped = value.coerceIn(300.0, 1500.0)
+            if (field != clamped) {
+                field = clamped
+                pcmCache.clear()
+            }
         }
 
     var volume: Float = 0.9f
@@ -108,7 +114,9 @@ class AudioTonePlayer {
         try {
             ensureTrackPlaying()
             val track = audioTrack ?: return@withContext
-            val pcm = generateSineWaveWithEnvelope(durationMs, frequency)
+            val pcm = pcmCache.computeIfAbsent(durationMs) {
+                generateSineWaveWithEnvelope(durationMs, frequency)
+            }
             track.write(pcm, 0, pcm.size, AudioTrack.WRITE_BLOCKING)
         } catch (e: Exception) {
             Log.w(TAG, "playTone error: ${e.message}")
