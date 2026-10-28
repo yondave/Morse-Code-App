@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -209,7 +210,142 @@ fun TransmitScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Quick Output Channel Toggles (Sound, Torch, Screen, Haptics)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterChip(
+                        selected = soundEnabled,
+                        onClick = { viewModel.toggleSound(!soundEnabled) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text("Sound", fontSize = 11.sp) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("quick_toggle_sound"),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SophisticatedPrimary,
+                            selectedLabelColor = SophisticatedOnPrimary,
+                            selectedLeadingIconColor = SophisticatedOnPrimary,
+                            containerColor = SophisticatedSurfaceDark,
+                            labelColor = SophisticatedTextSecondary,
+                            iconColor = SophisticatedTextSecondary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    FilterChip(
+                        selected = torchEnabled,
+                        onClick = { viewModel.toggleTorch(!torchEnabled) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.FlashOn,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text("Torch", fontSize = 11.sp) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("quick_toggle_torch"),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SophisticatedPrimary,
+                            selectedLabelColor = SophisticatedOnPrimary,
+                            selectedLeadingIconColor = SophisticatedOnPrimary,
+                            containerColor = SophisticatedSurfaceDark,
+                            labelColor = SophisticatedTextSecondary,
+                            iconColor = SophisticatedTextSecondary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    FilterChip(
+                        selected = screenFlashEnabled,
+                        onClick = { viewModel.toggleScreenFlash(!screenFlashEnabled) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.GraphicEq,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text("Screen", fontSize = 11.sp) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("quick_toggle_screen"),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SophisticatedPrimary,
+                            selectedLabelColor = SophisticatedOnPrimary,
+                            selectedLeadingIconColor = SophisticatedOnPrimary,
+                            containerColor = SophisticatedSurfaceDark,
+                            labelColor = SophisticatedTextSecondary,
+                            iconColor = SophisticatedTextSecondary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+
+                    FilterChip(
+                        selected = vibrationEnabled,
+                        onClick = { viewModel.toggleVibration(!vibrationEnabled) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Vibration,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text("Vibe", fontSize = 11.sp) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("quick_toggle_vibe"),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = SophisticatedPrimary,
+                            selectedLabelColor = SophisticatedOnPrimary,
+                            selectedLeadingIconColor = SophisticatedOnPrimary,
+                            containerColor = SophisticatedSurfaceDark,
+                            labelColor = SophisticatedTextSecondary,
+                            iconColor = SophisticatedTextSecondary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+
+                // Sound Transmission Status Banner & Test Beep
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (soundEnabled) "🔊 Sound transmission: ON (${pitchHz}Hz)" else "🔇 Sound transmission: MUTED",
+                        color = if (soundEnabled) SophisticatedSecondary else SophisticatedTextMuted,
+                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "▶ Test Beep",
+                        color = SophisticatedPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        modifier = Modifier
+                            .clickable { viewModel.playDitAudio() }
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .testTag("test_sound_beep_button")
+                    )
+                }
 
                 // Primary Transmit Action Button
                 Button(
@@ -512,23 +648,23 @@ fun TransmitScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutputToggleRow(
+                    icon = Icons.Default.VolumeUp,
+                    title = "Sound / Audio Beeps (Speaker)",
+                    subtitle = "Transmits CW Morse audio beeps through the device speaker (${pitchHz}Hz)",
+                    checked = soundEnabled,
+                    onCheckedChange = { viewModel.toggleSound(it) },
+                    tint = SophisticatedSecondary
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutputToggleRow(
                     icon = Icons.Default.FlashOn,
                     title = "Camera LED Flashlight",
                     subtitle = "Beams signals via phone's optical flash LED",
                     checked = torchEnabled,
                     onCheckedChange = { viewModel.toggleTorch(it) },
                     tint = SophisticatedPrimary
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                OutputToggleRow(
-                    icon = Icons.Default.VolumeUp,
-                    title = "Audio Sidetone Beeps",
-                    subtitle = "Pure sine wave CW telegraph audio",
-                    checked = soundEnabled,
-                    onCheckedChange = { viewModel.toggleSound(it) },
-                    tint = SophisticatedSecondary
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -656,6 +792,50 @@ fun TransmitScreen(
                         inactiveTrackColor = SophisticatedSurfaceDark
                     )
                 )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Quick Pitch Presets & Test Beep
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(550, 750, 800, 1000).forEach { presetPitch ->
+                            val isSelected = pitchHz == presetPitch
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setPitch(presetPitch) },
+                                label = { Text(if (presetPitch == 750) "750Hz (CW ★)" else "${presetPitch}Hz", fontSize = 10.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = SophisticatedPrimaryContainer,
+                                    selectedLabelColor = SophisticatedOnPrimaryContainer,
+                                    containerColor = SophisticatedSurfaceDark,
+                                    labelColor = SophisticatedTextSecondary
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = { viewModel.playDitAudio() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SophisticatedPrimaryContainer,
+                            contentColor = SophisticatedOnPrimaryContainer
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.testTag("test_pitch_button")
+                    ) {
+                        Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Test", fontSize = 11.sp)
+                    }
+                }
             }
         }
 
